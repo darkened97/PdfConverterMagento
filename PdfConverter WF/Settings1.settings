@@ -1,0 +1,18 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="PdfConverter_WF" GeneratedClassName="Settings1">
+  <Profiles />
+  <Settings>
+    <Setting Name="CalePdf" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\\Users\\bogdan.russ\\Desktop\\a1\\</Value>
+    </Setting>
+    <Setting Name="CaleXml" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\\Users\\bogdan.russ\\Desktop\\a1xml\\</Value>
+    </Setting>
+    <Setting Name="CaleExec" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\\Users\\bogdan.russ\\Desktop\\a1xmlfinal\\</Value>
+    </Setting>
+    <Setting Name="ApiUrl" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://mddemo01.era-erp.ro/ApiEraDoc/DOC_Import</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
