@@ -13,6 +13,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using System.Windows.Forms;
+using System.Globalization;
 
 namespace PdfConverter_WF
 {
@@ -99,7 +100,7 @@ namespace PdfConverter_WF
         }
         public void FileSystemWatcher_Created2(object sender, FileSystemEventArgs e)
         {
-            CitireXml();
+            CitireXml_UseClass();//CitireXml();
         }
         public void Conversie()
         {
@@ -164,8 +165,6 @@ namespace PdfConverter_WF
 
         public void CitireXml()
         {
-
-
             if (Global.paused == true)
             {
                 Task.Delay(100).ContinueWith(t => CitireXml());
@@ -177,7 +176,6 @@ namespace PdfConverter_WF
                 FileInfo[] infos = d.GetFiles();
                 foreach (FileInfo f in infos)
                 {
-
                     XmlTextReader xtr = new XmlTextReader(Settings1.Default.CaleXml + f.Name);
                     XmlTextReader xtr2 = new XmlTextReader(Settings1.Default.CaleXml + f.Name);
                     XmlTextReader xtr3 = new XmlTextReader(Settings1.Default.CaleXml + f.Name);
@@ -272,6 +270,7 @@ namespace PdfConverter_WF
 
                         }
                     }
+                    #region comment
                     //while (xtr2.Read())
                     //{
                     //    if (xtr2.IsStartElement())
@@ -354,6 +353,7 @@ namespace PdfConverter_WF
                     //{
                     //    existaScadenta = s3;
                     //}
+                    #endregion comment
 
                     if (s1 != "" && s2 != "")
                     {
@@ -429,6 +429,293 @@ namespace PdfConverter_WF
                         mFile.MoveTo(dird + "\\" + mFile.Name);
                     }
                 }
+            }
+        }
+        /// <summary>
+        /// adauga DOC_ImportDetalii la un document existent, prelucrand parametrii primiti
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="produsNume">numele produsului</param>
+        /// <param name="valoriConcat">valori concatenate</param>
+        private void DodImportDetaliiAppend(DOC_Import doc, string produsNume, string valoriConcat)
+        {
+            DOC_ImportDetalii impd = new DOC_ImportDetalii();
+            #region valori implicite
+            impd.Cantitate = 0;
+            impd.PretUnitar = 0;
+            impd.TVALinie = 0;
+            impd.AdaosLinie = 0;
+            impd.ValoareAdaosLinie = 0;
+            impd.ValoareLinie = 0;
+            impd.ValoareTVALinie = 0;
+            impd.GarantieLuni = 12;
+            #endregion valori implicite
+
+            produsNume = produsNume.Trim();
+            string tempNrCrt = produsNume.Substring(0, produsNume.IndexOf(' '));
+
+            int rezNrCrt = 0;
+            if (Int32.TryParse(tempNrCrt, out rezNrCrt) == true)//deci ce s-a extras este intreg
+            {
+                string tempProdusFaraNrCrt = produsNume.Substring(produsNume.IndexOf(' ') + 1, produsNume.Length - produsNume.IndexOf(' ') - 1);
+                produsNume = tempProdusFaraNrCrt;
+                impd.Custom = tempNrCrt;
+            }
+            impd.ProdusNume = produsNume;
+            impd.ProdusCod = "";
+
+            string[] vals = valoriConcat.Replace("  ", " ").Trim().Split(' ');//a)acolo unde apare 2 spatii se inlocuieste cu unul singur| b)separate prin spatiu
+            if (vals.Length >= 10) //cheltuieli de transport are 10 substringuri
+            {
+                var ci = CultureInfo.InvariantCulture.Clone() as CultureInfo;
+                ci.NumberFormat.NumberDecimalSeparator = ","; //indica separatorul de zecimale
+
+                for (int j = 0; j < vals.Length; j++)
+                {
+                    switch (j)
+                    {
+                        case 0:
+                            impd.UnitateCod = vals[j];
+                            break;
+                        case 1:
+                            impd.Cantitate = decimal.Parse(vals[j], ci);
+                            break;
+                        case 2://pret unitar
+                            impd.PretUnitar = decimal.Parse(vals[j], ci);
+                            break;
+                        case 3:
+                            //RON
+                            break;
+                        case 4: // Cota TVA
+                            impd.TVALinie = decimal.Parse(vals[j].Replace("%", ""), ci);
+                            break;
+                        case 5://Valoare
+                            impd.ValoareLinie = decimal.Parse(vals[j], ci);
+                            break;
+                        case 6://RON
+                            break;
+                        case 7://ValoareTVA
+                            impd.ValoareTVALinie = decimal.Parse(vals[j], ci);
+                            break;
+                        case 8://RON
+                            break;
+                        case 9://Total                            
+                            break;
+                        case 10://RON
+                            break;
+                    }
+                }
+            }
+
+            doc.DOC_ImportDetalii.Add(impd);
+        }
+        public void CitireXml_UseClass()
+        {
+            if (Global.paused == true)
+            {
+                Task.Delay(100).ContinueWith(t => CitireXml_UseClass());
+            }
+            else
+            {
+                String cale = Settings1.Default.CaleXml;
+                DirectoryInfo d = new DirectoryInfo(cale);
+                FileInfo[] infos = d.GetFiles();
+                foreach (FileInfo f in infos)
+                {
+                    #region pentru fiecare fisier de tip xml din folder aferent
+                    System.Xml.Serialization.XmlSerializer serializer = new System.Xml.Serialization.XmlSerializer(typeof(pdf2xml));
+                    pdf2xml contentXmlFile = new pdf2xml();
+
+                    TextReader txtReader = new StringReader(File.ReadAllText(Settings1.Default.CaleXml + f.Name));
+                    contentXmlFile = (pdf2xml)serializer.Deserialize(txtReader);
+
+                    #region variabile locale
+                    int linieTopVal = 0;//indica coordonata Top aferenta randului ce trebuie citit
+                    int linieLeftVal_Ant = 0;//indica coordonata Left a randului citit anterior
+                    string linieProdusNume = "";//formeaza numele produsului de pe linie, chiar daca e pe mai multe linii;                    
+                    string linieValori = "";// va concatena informatiile cu privire la randul citit (UM, Cantitate, PretUnitar, CotaTVA, Valoare, ValoareTVA, Total)
+                    bool finalCitireLinii = false;//indica daca s-au citit toate liniile
+
+                    #endregion variabile locale
+
+                    DOC_Import doc = new DOC_Import();
+                    doc.Id = -1;
+                    doc.StructuraCod = Settings1.Default.DocStructuraCod;
+                    doc.TipCod = Settings1.Default.DocTipCod;
+                    doc.ValutaSimbol = "RON";//de revizuit
+                    doc.Curs = 1;
+                    doc.TVA = 19;
+                    doc.Explicatie = "Autogenerat - deserializare pdf-xml";
+
+                    foreach (pdf2xmlPage pag in contentXmlFile.Items)
+                    {
+                        linieTopVal = 0;//resetare pt fiecare pag
+                        linieLeftVal_Ant = 0;//resetare pt fiecare pag
+                        if (linieProdusNume.Length > 0 && linieValori.Length > 0) //cand se trece la pag urmatoare, trebuie salvat si ultima linie
+                            DodImportDetaliiAppend(doc, linieProdusNume, linieValori);
+
+                        linieProdusNume = "";
+                        linieValori = "";
+
+                        for (int i = 0; i < pag.text.Length; i++) //foreach (pdf2xmlPageText pgTxt in pag.text)
+                        {
+                            if (finalCitireLinii == false)//citeste doar daca nu s-a intalnit ultimul sir care marcheaza final zona linii, sir ="Semnatura si"
+                            {
+                                try
+                                {
+                                    pdf2xmlPageText pgTxt = pag.text[i] as pdf2xmlPageText;
+                                    #region Antet document
+                                    if (pgTxt.b != null && pgTxt.b.Contains("Seria si nr."))
+                                    {
+                                        if (pgTxt.Value != null)
+                                            doc.Numar = pgTxt.Value;
+                                        continue;
+                                    }
+                                    if (pgTxt.b != null && pgTxt.b.Contains("Data facturii"))
+                                    {
+                                        if (pgTxt.Value != null)
+                                            doc.Data = Convert.ToDateTime(pgTxt.Value.Replace(":", "").Trim());
+                                        continue;
+                                    }
+                                    if (pgTxt.b != null && pgTxt.b.Contains("Data scadentei"))
+                                    {
+                                        if (pgTxt.Value != null)
+                                            doc.Scadenta = Convert.ToDateTime(pgTxt.Value.Replace(":", "").Trim());
+                                        continue;
+                                    }
+                                    if (pgTxt.b != null && pgTxt.b.Contains("CUMPARATOR"))
+                                    {
+                                        if (pag.text.Length > i + 6)//se verifica ca nu depaseste numarul de linii asteptat
+                                        {
+                                            pdf2xmlPageText pgTxt_ParNume = pag.text[i + 1] as pdf2xmlPageText;
+                                            doc.PartenerNume = pgTxt_ParNume.Value;
+                                            pdf2xmlPageText pgTxt_ParCUI = pag.text[i + 6] as pdf2xmlPageText;
+                                            doc.PartenerCUI = pgTxt_ParCUI.Value;
+                                            continue;
+                                        }
+                                    }
+                                    #endregion Antet document
+
+                                    #region determinare valoare coordonata TOP - indica linia de citit
+                                    if (pgTxt.b != null && pgTxt.b.Contains("CU TVA"))
+                                    {//se extrage coordonata Top aferenta primului rand din pagina
+                                        if (pag.text.Length > i + 1)
+                                        {
+                                            pdf2xmlPageText pgTxt_NextLinie = pag.text[i + 1] as pdf2xmlPageText;
+                                            linieTopVal = Convert.ToInt32(pgTxt_NextLinie.top);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (linieTopVal > 0 //indica ca s-a trecut de indicatorul "CU TVA"
+                                            && Convert.ToInt32(pgTxt.top) > linieTopVal && Convert.ToInt32(pgTxt.left) < linieLeftVal_Ant)
+                                        {
+                                            linieTopVal = Convert.ToInt32(pgTxt.top);// NOUA LINIE!!
+                                            DodImportDetaliiAppend(doc, linieProdusNume, linieValori);
+                                            linieProdusNume = "";
+                                            linieValori = "";
+                                        }
+                                    }
+                                    #endregion determinare valoare coordonata TOP - linie de citit
+
+                                    #region citire LINIE
+                                    if (Convert.ToInt32(pgTxt.top) == linieTopVal)//indica randul
+                                    {
+                                        if (Convert.ToInt32(pgTxt.left) < linieLeftVal_Ant) //sunt la inceput de rand, gasesc produs Nume
+                                        {
+                                            linieProdusNume += pgTxt.Value;
+                                        }
+                                        else //NU sunt la inceput de rand, sigur alte informatii (UM, Cantitate, PretUnitar, CotaTVA, Valoare, ValoareTVA, Total)
+                                        {
+                                            if (pgTxt.Value != null)
+                                                linieValori += " " + pgTxt.Value;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (pag.text.Length > i + 1)
+                                        {
+                                            pdf2xmlPageText pgTxt_NextLinie = pag.text[i + 1] as pdf2xmlPageText;
+                                            //Daca urmatoarea pozitie are top = linieTopVal sau left = left curent => textul reprezinta continuare denumire produs
+                                            if (linieTopVal > 0
+                                                && (Convert.ToInt32(pgTxt_NextLinie.top) == linieTopVal || Convert.ToInt32(pgTxt_NextLinie.left) == Convert.ToInt32(pgTxt.left)))
+                                            {
+                                                if (pgTxt.Value != null)
+                                                    linieProdusNume += " " + pgTxt.Value.Trim();
+                                            }
+                                        }
+                                    }
+                                    #endregion citire LINIE
+
+                                    ////
+                                    linieLeftVal_Ant = Convert.ToInt32(pgTxt.left);
+
+                                    if (pgTxt.Value != null && pgTxt.Value.Contains("Semnatura si"))
+                                    {
+                                        finalCitireLinii = true;
+                                        continue;
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    //LOG
+                                }
+                            }
+                        }
+                    }
+
+                    #endregion pentru fiecare fisier de tip xml din folder aferent
+
+                    #region expediere fisier catre API
+                    string serviceUri = Settings1.Default.ApiUrl;
+                    JsonSerializerSettings jsonSettings = new JsonSerializerSettings();
+                    jsonSettings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
+                    jsonSettings.Culture = CultureInfo.InvariantCulture;
+                    jsonSettings.DateTimeZoneHandling = DateTimeZoneHandling.Local;
+                    string json = JsonConvert.SerializeObject(doc, jsonSettings);
+                    PostRequest(serviceUri, json);
+                    #endregion expediere fisier catre API
+                }
+
+                #region mutare fisiere in istoric
+                string pdfstart = Settings1.Default.CalePdf;
+                string start = Settings1.Default.CaleXml;
+                string destinatie = Settings1.Default.CaleExec + "Istoric";
+                DirectoryInfo dirs = new DirectoryInfo(start);
+                DirectoryInfo dird = new DirectoryInfo(destinatie);
+                if (dirs.Exists == false)
+                    Directory.CreateDirectory(start);
+                if (dird.Exists == false)
+                    Directory.CreateDirectory(destinatie);
+                if (dirs.Exists == false)
+                    Directory.CreateDirectory(pdfstart);
+                List<String> XML = Directory.GetFiles(start, "*.*", SearchOption.TopDirectoryOnly).ToList();
+                List<String> XMLpdf = Directory.GetFiles(pdfstart, "*.*", SearchOption.TopDirectoryOnly).ToList();
+                foreach (string file in XML)
+                {
+                    FileInfo mFile = new FileInfo(file);
+                    string newFileName = mFile.Name.Replace(".xml", "") + (DateTime.Today.ToShortDateString()).Replace("/", "-")
+                                            + "_" + (DateTime.Now.ToLongTimeString()).Replace(":", "-")
+                                            + ".xml"; //daca exista in istoric fisierul cu acelasi nume se redenumeste si se muta
+
+                    if (new FileInfo(dird + "\\" + newFileName).Exists == true)//daca destinatia contine deja fisierul cu noua denumire (ceea ce e putin probabil)
+                        mFile.Delete();
+                    else
+                        mFile.MoveTo(dird + "\\" + newFileName);
+                }
+                foreach (string file in XMLpdf)
+                {
+                    FileInfo mFile = new FileInfo(file);
+                    string newFileName = mFile.Name.Replace(".pdf", "") + (DateTime.Today.ToShortDateString()).Replace("/", "-")
+                                            + "_" + (DateTime.Now.ToLongTimeString()).Replace(":", "-")
+                                            + ".pdf"; //daca exista in istoric fisierul cu acelasi nume se redenumeste si se muta
+
+                    if (new FileInfo(dird + "\\" + newFileName).Exists == true)//daca destinatia contine deja fisierul cu noua denumire (ceea ce e putin probabil)
+                        mFile.Delete();
+                    else
+                        mFile.MoveTo(dird + "\\" + newFileName);
+                }
+                #endregion mutare fisiere in istoric
             }
         }
         private void Form1_Resize(object sender, EventArgs e)

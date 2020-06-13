@@ -297,4 +297,6 @@ public partial class pdf2xmlPageText {
             this.fontField = value;
         }
     }
+    [System.Xml.Serialization.XmlText()]
+    public string Value { get; set; }
 }

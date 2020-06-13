@@ -12,7 +12,7 @@ namespace PdfConverter_WF {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.3.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.4.0.0")]
     internal sealed partial class Settings1 : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings1 defaultInstance = ((Settings1)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings1())));
@@ -25,7 +25,19 @@ namespace PdfConverter_WF {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\\\Users\\\\bogdan.russ\\\\Desktop\\\\a1\\\\")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://mddemo01.era-erp.ro/ApiEraDoc/DOC_Import")]
+        public string ApiUrl {
+            get {
+                return ((string)(this["ApiUrl"]));
+            }
+            set {
+                this["ApiUrl"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Develop\\Repos\\PdfConverterTeste\\pdf\\")]
         public string CalePdf {
             get {
                 return ((string)(this["CalePdf"]));
@@ -37,7 +49,7 @@ namespace PdfConverter_WF {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\\\Users\\\\bogdan.russ\\\\Desktop\\\\a1xml\\\\")]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Develop\\Repos\\PdfConverterTeste\\xml\\")]
         public string CaleXml {
             get {
                 return ((string)(this["CaleXml"]));
@@ -49,7 +61,7 @@ namespace PdfConverter_WF {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\\\Users\\\\bogdan.russ\\\\Desktop\\\\a1xmlfinal\\\\")]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Develop\\Repos\\PdfConverterTeste\\exec\\")]
         public string CaleExec {
             get {
                 return ((string)(this["CaleExec"]));
@@ -61,13 +73,25 @@ namespace PdfConverter_WF {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://mddemo01.era-erp.ro/ApiEraDoc/DOC_Import")]
-        public string ApiUrl {
+        [global::System.Configuration.DefaultSettingValueAttribute("Mida Soft")]
+        public string DocStructuraCod {
             get {
-                return ((string)(this["ApiUrl"]));
+                return ((string)(this["DocStructuraCod"]));
             }
             set {
-                this["ApiUrl"] = value;
+                this["DocStructuraCod"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("FCTVA")]
+        public string DocTipCod {
+            get {
+                return ((string)(this["DocTipCod"]));
+            }
+            set {
+                this["DocTipCod"] = value;
             }
         }
     }
