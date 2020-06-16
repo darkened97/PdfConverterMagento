@@ -31,6 +31,7 @@ namespace PdfConverter_WF
 
         [Column(TypeName = "smalldatetime")]
         public DateTime? Data { get; set; }
+        public DateTime? Scadenta { get; set; }
 
         //[Column(TypeName = "smalldatetime")]
         //public DateTime? DataDoc { get; set; }
