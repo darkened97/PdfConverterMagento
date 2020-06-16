@@ -6,13 +6,13 @@
       <Value Profile="(Default)">http://mddemo01.era-erp.ro/ApiEraDoc/DOC_Import</Value>
     </Setting>
     <Setting Name="CalePdf" Type="System.String" Scope="User">
-      <Value Profile="(Default)">C:\Develop\Repos\PdfConverterTeste\pdf\</Value>
+      <Value Profile="(Default)">C:\Users\bogdan.russ\Desktop\a1\</Value>
     </Setting>
     <Setting Name="CaleXml" Type="System.String" Scope="User">
-      <Value Profile="(Default)">C:\Develop\Repos\PdfConverterTeste\xml\</Value>
+      <Value Profile="(Default)">C:\Users\bogdan.russ\Desktop\a1xml\</Value>
     </Setting>
     <Setting Name="CaleExec" Type="System.String" Scope="User">
-      <Value Profile="(Default)">C:\Develop\Repos\PdfConverterTeste\exec\</Value>
+      <Value Profile="(Default)">C:\Users\bogdan.russ\Desktop\a1xmlfinal\</Value>
     </Setting>
     <Setting Name="DocStructuraCod" Type="System.String" Scope="User">
       <Value Profile="(Default)">Mida Soft</Value>

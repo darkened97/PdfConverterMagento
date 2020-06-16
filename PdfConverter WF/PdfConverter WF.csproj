@@ -69,6 +69,7 @@
       <DependentUpon>Settings1.settings</DependentUpon>
     </Compile>
     <Compile Include="Xml_Import.cs" />
+    <Compile Include="Xml_Import_Storno.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
