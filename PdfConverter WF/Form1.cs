@@ -26,6 +26,17 @@ namespace PdfConverter_WF
             String path2 = Settings1.Default.CaleXml;
             MonitorDirectory(path);
             MonitorDirectory2(path2);
+
+            using (StreamWriter w = File.AppendText("log.txt"))
+            {
+                Log("Test1", w);
+                Log("Test2", w);
+            }
+
+            using (StreamReader r = File.OpenText("log.txt"))
+            {
+                DumpLog(r);
+            }
         }
 
         async static void GetRequest(string Uri)
@@ -449,5 +460,25 @@ namespace PdfConverter_WF
             this.WindowState = FormWindowState.Normal;
             notifyIcon1.Visible = false;
         }
+
+        public static void Log(string logMessage, TextWriter w)
+        {
+            w.Write("\r\nLog Entry : ");
+            w.WriteLine($"{DateTime.Now.ToLongTimeString()} {DateTime.Now.ToLongDateString()}");
+            w.WriteLine("  :");
+            w.WriteLine($"  :{logMessage}");
+            w.WriteLine("-------------------------------");
+        }
+
+        public static void DumpLog(StreamReader r)
+        {
+            string line;
+            while ((line = r.ReadLine()) != null)
+            {
+                Console.WriteLine(line);
+            }
+        }
+
+       
     }
 }
