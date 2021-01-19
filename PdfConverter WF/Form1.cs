@@ -1239,8 +1239,11 @@ namespace PdfConverter_WF
                                                 if (pag.text.Length>i+1)//se verifica ca nu depaseste numarul de linii asteptat
                                                 {
                                                     pdf2xmlPageText pgTxt_Total = pag.text[i + 1] as pdf2xmlPageText;
-                                                    doc.PartenerNume = pgTxt_Total.Value;
-
+                                                    linieValori = pgTxt_Total.Value;
+                                                    linieProdusNume = "Serviciu Transport";
+                                                    DodImportDetaliiAppendStorno(doc, linieProdusNume, linieValori);
+                                                    linieProdusNume = "";
+                                                    linieValori = "";
                                                     continue;
                                                 }
                                                 
