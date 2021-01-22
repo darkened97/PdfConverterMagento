@@ -14,6 +14,7 @@ using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using System.Windows.Forms;
 using System.Globalization;
+using System.IO;
 
 namespace PdfConverter_WF
 {
@@ -1030,9 +1031,9 @@ namespace PdfConverter_WF
                             #endregion mutare fisiere in istoric
 
                             string good = "Fisierul cu numele: " + f.Name + " a fost incarcat cu succes:";
-                           
+
                             string sMonth = DateTime.Now.ToString("yyyy_MM");
-                            string numeLog = "log"+sMonth+".txt";
+                            string numeLog = "log" + sMonth + ".txt";
                             string logpath = Settings1.Default.CaleExec + "//Log//" + numeLog;
                             //LOG
                             using (StreamWriter w = File.AppendText(logpath))
@@ -1145,10 +1146,10 @@ namespace PdfConverter_WF
                                                 DateTime time;
                                                 string[] parts = pgTxt.Value.Split(' ');
                                                 string lastWord = parts[parts.Length - 1];
-                                                string secondlastword= parts[parts.Length - 2];
+                                                string secondlastword = parts[parts.Length - 2];
                                                 string monthinnumber = month[secondlastword];
-                                                string thirdlastword= parts[parts.Length - 3];
-                                                string data = thirdlastword + "/" + monthinnumber+ "/" + lastWord;
+                                                string thirdlastword = parts[parts.Length - 3];
+                                                string data = thirdlastword + "/" + monthinnumber + "/" + lastWord;
                                                 if (pgTxt.Value != null)
                                                 {
                                                     if (DateTime.TryParse(data, out time))
@@ -1170,7 +1171,7 @@ namespace PdfConverter_WF
                                                 {
                                                     pdf2xmlPageText pgTxt_ParNume = pag.text[i + 1] as pdf2xmlPageText;
                                                     doc.PartenerNume = pgTxt_ParNume.Value;
-                                                    
+
                                                     continue;
                                                 }
                                             }
@@ -1236,7 +1237,7 @@ namespace PdfConverter_WF
                                             if (pgTxt.Value != null && pgTxt.Value.Contains("Valoarea Brut"))
                                             {
 
-                                                if (pag.text.Length>i+1)//se verifica ca nu depaseste numarul de linii asteptat
+                                                if (pag.text.Length > i + 1)//se verifica ca nu depaseste numarul de linii asteptat
                                                 {
                                                     pdf2xmlPageText pgTxt_Total = pag.text[i + 1] as pdf2xmlPageText;
                                                     linieValori = pgTxt_Total.Value;
@@ -1246,7 +1247,7 @@ namespace PdfConverter_WF
                                                     linieValori = "";
                                                     continue;
                                                 }
-                                                
+
 
                                             }
                                             #endregion citire LINIE
@@ -1347,6 +1348,161 @@ namespace PdfConverter_WF
                         }
 
                     }
+                    else if (f.Name.Contains("Bolt"))
+                    {
+                        #region Dictionar de luni
+                        Dictionary<string, string> month =
+                                new Dictionary<string, string>();
+                        month.Add("ianuarie", "01");
+                        month.Add("februarie", "02");
+                        month.Add("martie", "03");
+                        month.Add("aprilie", "04");
+                        month.Add("mai", "05");
+                        month.Add("iunie", "06");
+                        month.Add("iulie", "07");
+                        month.Add("august", "08");
+                        month.Add("septembrie", "09");
+                        month.Add("octombrie", "10");
+                        month.Add("noiembrie", "11");
+                        month.Add("decembrie", "12");
+
+                        month.Add("Ianuarie", "01");
+                        month.Add("Februarie", "02");
+                        month.Add("Martie", "03");
+                        month.Add("Aprilie", "04");
+                        month.Add("Mai", "05");
+                        month.Add("Iunie", "06");
+                        month.Add("Iulie", "07");
+                        month.Add("August", "08");
+                        month.Add("Septembrie", "09");
+                        month.Add("Octombrie", "10");
+                        month.Add("Noiembrie", "11");
+                        month.Add("Decembrie", "12");
+
+                        #endregion
+
+                        try
+                        {
+
+
+                            DOC_Import doc = new DOC_Import();
+                            doc.Id = -1;
+                            doc.StructuraCod = Settings1.Default.DocStructuraCod;
+                            doc.TipCod = Settings1.Default.DocTipCod;
+                            doc.ValutaSimbol = "RON";//de revizuit
+                            doc.Curs = 1;
+                            doc.TVA = 19;
+                            doc.Explicatie = "Autogenerat - deserializare pdf-xml";
+
+                            int linieTopVal = 0;//indica coordonata Top aferenta randului ce trebuie citit
+                            int linieLeftVal_Ant = 0;//indica coordonata Left a randului citit anterior
+                            string linieProdusNume = "";//formeaza numele produsului de pe linie, chiar daca e pe mai multe linii;                    
+                            string linieValori = "";// va concatena informatiile cu privire la randul citit (UM, Cantitate, PretUnitar, CotaTVA, Valoare, ValoareTVA, Total)
+                            bool finalCitireLinii = false;//indica daca s-au citit toate liniile
+
+
+                            using (var reader = new StreamReader(cale+ "\\Bolt - Facturi călătorie"))
+                            {
+                                linieValori = "";
+                                linieProdusNume = "";
+                                
+                                while (!reader.EndOfStream)
+                                {
+                                    DateTime time;
+                                    var line = reader.ReadLine();
+                                    var values = line.Split(';');
+                                    var data = values[1].TrimEnd();
+
+                                    doc.Numar = values[0];
+                                    if (DateTime.TryParse(data, out time))
+                                    {
+                                        doc.Data = time;
+                                    }
+                                    doc.PartenerNume = values[11];// asta ia numele companiei, sau se poate pune "BOLT";
+                                    doc.PartenerCUI = values[13];
+                                    linieValori = values[16];
+                                    linieProdusNume = "Serviciu Transport";
+                                    DodImportDetaliiAppendStorno(doc, linieProdusNume, linieValori);
+                                    #region expediere fisier catre API
+                                    string serviceUri = Settings1.Default.ApiUrl;
+                                    JsonSerializerSettings jsonSettings = new JsonSerializerSettings();
+                                    jsonSettings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
+                                    jsonSettings.Culture = CultureInfo.InvariantCulture;
+                                    jsonSettings.DateTimeZoneHandling = DateTimeZoneHandling.Local;
+                                    string json = JsonConvert.SerializeObject(doc, jsonSettings);
+                                    PostRequest(serviceUri, json);
+                                    #endregion expediere fisier catre API
+                                }
+                            }
+
+                            
+
+                            #region mutare fisiere in istoric
+                            string pdfstart = Settings1.Default.CalePdf;
+                            string start = Settings1.Default.CaleXml;
+                            string destinatie = Settings1.Default.CaleExec + "Istoric";
+                            DirectoryInfo dirs = new DirectoryInfo(start);
+                            DirectoryInfo dird = new DirectoryInfo(destinatie);
+                            if (dirs.Exists == false)
+                                Directory.CreateDirectory(start);
+                            if (dird.Exists == false)
+                                Directory.CreateDirectory(destinatie);
+                            if (dirs.Exists == false)
+                                Directory.CreateDirectory(pdfstart);
+                            List<String> XML = Directory.GetFiles(start, "*.*", SearchOption.TopDirectoryOnly).ToList();
+                            List<String> XMLpdf = Directory.GetFiles(pdfstart, "*.*", SearchOption.TopDirectoryOnly).ToList();
+                            foreach (string file in XML)
+                            {
+                                FileInfo mFile = new FileInfo(file);
+                                string newFileName = mFile.Name.Replace(".xml", "") + (DateTime.Today.ToShortDateString()).Replace("/", "-")
+                                                        + "_" + (DateTime.Now.ToLongTimeString()).Replace(":", "-")
+                                                        + ".xml"; //daca exista in istoric fisierul cu acelasi nume se redenumeste si se muta
+
+                                if (new FileInfo(dird + "\\" + newFileName).Exists == true)//daca destinatia contine deja fisierul cu noua denumire (ceea ce e putin probabil)
+                                    mFile.Delete();
+                                else
+                                    mFile.MoveTo(dird + "\\" + newFileName);
+                            }
+                            foreach (string file in XMLpdf)
+                            {
+                                FileInfo mFile = new FileInfo(file);
+                                string newFileName = mFile.Name.Replace(".pdf", "") + (DateTime.Today.ToShortDateString()).Replace("/", "-")
+                                                        + "_" + (DateTime.Now.ToLongTimeString()).Replace(":", "-")
+                                                        + ".pdf"; //daca exista in istoric fisierul cu acelasi nume se redenumeste si se muta
+
+                                if (new FileInfo(dird + "\\" + newFileName).Exists == true)//daca destinatia contine deja fisierul cu noua denumire (ceea ce e putin probabil)
+                                    mFile.Delete();
+                                else
+                                    mFile.MoveTo(dird + "\\" + newFileName);
+                            }
+                            #endregion mutare fisiere in istoric
+
+                            string good = "Fisierul cu numele: " + f.Name + " a fost incarcat cu succes:";
+
+                            string sMonth = DateTime.Now.ToString("yyyy_MM");
+                            string numeLog = "log" + sMonth + ".txt";
+                            string logpath = Settings1.Default.CaleExec + "//Log//" + numeLog;
+                            //LOG
+                            using (StreamWriter w = File.AppendText(logpath))
+                            {
+                                Log(good, w);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            string fail = "Incarcarea a esuat: ";
+                            fail = fail + ex.Message;
+                            string sMonth = DateTime.Now.ToString("yyyy_MM");
+                            string numeLog = "log" + sMonth + ".txt";
+                            string logpath = Settings1.Default.CaleExec + "//Log//" + numeLog;
+                            //LOG
+                            using (StreamWriter w = File.AppendText(logpath))
+                            {
+                                Log(fail, w);
+                            }
+                        }
+
+                    }
                     else
                     {
 
@@ -1362,7 +1518,7 @@ namespace PdfConverter_WF
                     }
                 }
 
-               
+
 
 
             }
